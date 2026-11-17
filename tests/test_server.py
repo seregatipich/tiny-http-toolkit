@@ -41,12 +41,12 @@ def test_parse_request_returns_method_path_and_lowercase_headers():
 
 @pytest.mark.parametrize("request_bytes", [b"", b"GARBAGE", b"GET /\r\n\r\n"])
 def test_parse_request_rejects_malformed_request_lines(request_bytes):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Malformed request line"):
         parse_request(request_bytes)
 
 
 @pytest.mark.parametrize(
-    "http_method, path, expected_status",
+    ("http_method", "path", "expected_status"),
     [
         ("GET", "/", 200),
         ("GET", "/echo/hi?x=1", 200),

@@ -1,4 +1,7 @@
-"""Minimal HTTP/1.1 server on plain sockets: ``/``, ``/echo/<text>`` and ``/user-agent``."""
+"""Minimal HTTP/1.1 server on plain sockets.
+
+Serves ``/``, ``/echo/<text>`` and ``/user-agent``, one client at a time.
+"""
 
 import socket
 import threading
@@ -29,7 +32,7 @@ def read_request_bytes(
     return request_bytes
 
 
-def parse_request(request_bytes: bytes) -> tuple[str, str, dict]:
+def parse_request(request_bytes: bytes) -> tuple[str, str, dict[str, str]]:
     """Return ``(http_method, path, headers)`` from the bytes of a request.
 
     Header names are lower-cased.
@@ -42,7 +45,7 @@ def parse_request(request_bytes: bytes) -> tuple[str, str, dict]:
     if len(request_line_parts) != 3:
         raise ValueError("Malformed request line.")
     http_method, path, _http_version = request_line_parts
-    headers = {}
+    headers: dict[str, str] = {}
     for header_line in request_lines[1:]:
         header_name, separator, header_value = header_line.partition(":")
         if separator:
@@ -50,7 +53,9 @@ def parse_request(request_bytes: bytes) -> tuple[str, str, dict]:
     return http_method, path, headers
 
 
-def choose_response(http_method: str, path: str, headers: dict) -> tuple[int, str]:
+def choose_response(
+    http_method: str, path: str, headers: dict[str, str]
+) -> tuple[int, str]:
     """Return ``(status_code, response_text)`` for a parsed request."""
     path_without_query = urlsplit(path).path
     if http_method != "GET":

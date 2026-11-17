@@ -20,10 +20,10 @@ def test_reading_skips_corrupt_blank_and_non_object_lines(tmp_path):
     assert read_log(str(log_file)) == [{"a": 1}, {"b": 2}]
 
 
-def test_sending_fails_with_os_error_when_the_directory_cannot_be_created(tmp_path):
+def test_sending_fails_when_the_log_directory_cannot_be_created(tmp_path):
     file_in_the_way = tmp_path / "file"
     file_in_the_way.write_text("x")
-    with pytest.raises(OSError):
+    with pytest.raises(FileExistsError):
         send_to_log(str(file_in_the_way / "log.jsonl"), {"a": 1})
 
 

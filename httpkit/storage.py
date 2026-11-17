@@ -5,9 +5,10 @@ Results are written here instead of being printed, and shown later by ``display_
 
 import json
 from pathlib import Path
+from typing import Any
 
 
-def send_to_log(log_path: str, log_entry: dict) -> None:
+def send_to_log(log_path: str, log_entry: dict[str, Any]) -> None:
     """Append ``log_entry`` as one line to the log file, creating the file if needed.
 
     Raises:
@@ -21,7 +22,7 @@ def send_to_log(log_path: str, log_entry: dict) -> None:
         log_file.write(serialized_entry + "\n")
 
 
-def read_log(log_path: str) -> list[dict]:
+def read_log(log_path: str) -> list[dict[str, Any]]:
     """Return all valid entries of the log file; unreadable lines are skipped.
 
     A missing file gives an empty list.

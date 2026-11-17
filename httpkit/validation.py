@@ -22,7 +22,7 @@ def validate_url(user_input: str) -> str:
     """Return ``user_input`` without surrounding spaces, if it is an http(s) URL.
 
     Raises:
-        ValueError: if the scheme is missing or is not http/https, or if there is no host.
+        ValueError: if the scheme is not http/https, or the host or port is invalid.
     """
     url = user_input.strip()
     url_parts = urlsplit(url)

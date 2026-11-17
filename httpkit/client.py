@@ -1,11 +1,14 @@
 """API client: one GET request, described as a dict ready for the log."""
 
 from datetime import datetime
+from typing import Any
 
 import requests
 
 
-def call_api(url: str, timeout_seconds: float = 5.0, max_body_chars: int = 500) -> dict:
+def call_api(
+    url: str, timeout_seconds: float = 5.0, max_body_chars: int = 500
+) -> dict[str, Any]:
     """Send a GET request to ``url`` and describe the result as a log entry.
 
     Network problems do not raise; they are stored under ``error`` so they can be
@@ -15,7 +18,7 @@ def call_api(url: str, timeout_seconds: float = 5.0, max_body_chars: int = 500) 
         ``{"timestamp", "url", "status", "body"}`` (body cut to ``max_body_chars``
         characters) or ``{"timestamp", "url", "error"}``.
     """
-    log_entry: dict = {
+    log_entry: dict[str, Any] = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "url": url,
     }

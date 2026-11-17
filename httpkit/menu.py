@@ -26,7 +26,7 @@ def prompt_until_valid(
             print(f"Invalid input: {validation_error}")
 
 
-def start_server_action(app_state: dict) -> None:
+def start_server_action(app_state: dict[str, Any]) -> None:
     """Menu action: start the built-in server on a port chosen by the user."""
     if app_state["server_socket"]:
         print("Server is already running.")
@@ -43,7 +43,7 @@ def start_server_action(app_state: dict) -> None:
     print(f"Server listening on http://{app_state['host']}:{actual_port}")
 
 
-def send_request_action(app_state: dict) -> None:
+def send_request_action(app_state: dict[str, Any]) -> None:
     """Menu action: GET a URL and save the result to the log without printing it."""
     server_socket = app_state["server_socket"]
     if server_socket:
@@ -60,7 +60,7 @@ def send_request_action(app_state: dict) -> None:
     print("Result saved to the log. Choose 'View log' to read it.")
 
 
-def view_log_action(app_state: dict) -> None:
+def view_log_action(app_state: dict[str, Any]) -> None:
     """Menu action: show everything stored in the log file."""
     try:
         display_log(app_state["log_path"])
@@ -75,7 +75,7 @@ def run_menu(log_path: str = "data/history.jsonl") -> None:
     ``default_port`` (where the built-in server listens), ``log_path`` (the log file)
     and ``server_socket`` (the running server's socket, or None).
     """
-    app_state: dict = {
+    app_state: dict[str, Any] = {
         "host": "127.0.0.1",
         "default_port": 8080,
         "log_path": log_path,

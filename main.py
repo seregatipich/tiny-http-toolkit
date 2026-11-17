@@ -1,4 +1,4 @@
-"""Entry point: python main.py"""
+"""Entry point: run the app with ``python main.py``."""
 
 from httpkit.menu import run_menu
 
