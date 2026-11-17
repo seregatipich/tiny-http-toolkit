@@ -7,45 +7,47 @@ from http import HTTPStatus
 from urllib.parse import unquote, urlsplit
 
 
-def parse_request(raw: bytes) -> tuple[str, str, dict]:
-    """Return ``(method, path, headers)`` from raw request bytes.
+def parse_request(request_bytes: bytes) -> tuple[str, str, dict]:
+    """Return ``(http_method, path, headers)`` from the bytes of a request.
 
     Header names are lower-cased.
 
     Raises:
-        ValueError: if the request line is malformed.
+        ValueError: if the request line is not ``METHOD PATH VERSION``.
     """
-    lines = raw.decode("latin-1").split("\r\n")
-    parts = lines[0].split(" ")
-    if len(parts) != 3:
+    request_lines = request_bytes.decode("latin-1").split("\r\n")
+    request_line_parts = request_lines[0].split(" ")
+    if len(request_line_parts) != 3:
         raise ValueError("Malformed request line.")
+    http_method, path, _http_version = request_line_parts
     headers = {}
-    for line in lines[1:]:
-        name, sep, value = line.partition(":")
-        if sep:
-            headers[name.strip().lower()] = value.strip()
-    return parts[0], parts[1], headers
+    for header_line in request_lines[1:]:
+        header_name, separator, header_value = header_line.partition(":")
+        if separator:
+            headers[header_name.strip().lower()] = header_value.strip()
+    return http_method, path, headers
 
 
-def route(method: str, path: str, headers: dict) -> tuple[int, str]:
-    """Return ``(status, text)`` for a request."""
-    path = urlsplit(path).path
-    if method != "GET":
+def choose_response(http_method: str, path: str, headers: dict) -> tuple[int, str]:
+    """Return ``(status_code, response_text)`` for a parsed request."""
+    path_without_query = urlsplit(path).path
+    if http_method != "GET":
         return 405, "Method not allowed"
-    if path == "/":
+    if path_without_query == "/":
         return 200, "tiny-http-toolkit is running"
-    if path == "/user-agent":
+    if path_without_query == "/user-agent":
         return 200, headers.get("user-agent", "")
-    if path.startswith("/echo/"):
-        return 200, unquote(path[len("/echo/") :])
+    echo_prefix = "/echo/"
+    if path_without_query.startswith(echo_prefix):
+        return 200, unquote(path_without_query[len(echo_prefix) :])
     return 404, "Not found"
 
 
-def build_response(status: int, text: str) -> bytes:
-    """Serialise a plain-text response."""
-    body = text.encode("utf-8")
+def build_http_response(status_code: int, response_text: str) -> bytes:
+    """Serialise a plain-text HTTP response."""
+    body = response_text.encode("utf-8")
     head = (
-        f"HTTP/1.1 {status} {HTTPStatus(status).phrase}\r\n"
+        f"HTTP/1.1 {status_code} {HTTPStatus(status_code).phrase}\r\n"
         "Content-Type: text/plain; charset=utf-8\r\n"
         f"Content-Length: {len(body)}\r\n"
         "Connection: close\r\n\r\n"
@@ -53,31 +55,34 @@ def build_response(status: int, text: str) -> bytes:
     return head.encode("latin-1") + body
 
 
-def handle_client(conn: socket.socket) -> None:
-    """Answer one request on ``conn`` and close it.
+def answer_client(client_connection: socket.socket) -> None:
+    """Answer one request on ``client_connection`` and close it.
 
     Malformed requests get 400; clients that stay silent for a second are dropped.
     """
-    with conn:
-        conn.settimeout(1)
+    max_request_bytes = 4096
+    silent_client_timeout_seconds = 1
+    with client_connection:
+        client_connection.settimeout(silent_client_timeout_seconds)
         try:
-            status, text = route(*parse_request(conn.recv(4096)))
+            request_bytes = client_connection.recv(max_request_bytes)
+            status_code, response_text = choose_response(*parse_request(request_bytes))
         except ValueError:
-            status, text = 400, "Bad request"
+            status_code, response_text = 400, "Bad request"
         except OSError:
             return
         with suppress(OSError):
-            conn.sendall(build_response(status, text))
+            client_connection.sendall(build_http_response(status_code, response_text))
 
 
-def serve(sock: socket.socket) -> None:
-    """Handle clients one after another until ``sock`` is closed."""
+def serve_clients(listening_socket: socket.socket) -> None:
+    """Answer clients one after another until ``listening_socket`` is closed."""
     while True:
         try:
-            conn, _ = sock.accept()
+            client_connection, _client_address = listening_socket.accept()
         except OSError:
             return
-        handle_client(conn)
+        answer_client(client_connection)
 
 
 def start_server(host: str, port: int) -> socket.socket:
@@ -89,6 +94,8 @@ def start_server(host: str, port: int) -> socket.socket:
     Raises:
         OSError: if the address cannot be bound.
     """
-    sock = socket.create_server((host, port))
-    threading.Thread(target=serve, args=(sock,), daemon=True).start()
-    return sock
+    listening_socket = socket.create_server((host, port))
+    threading.Thread(
+        target=serve_clients, args=(listening_socket,), daemon=True
+    ).start()
+    return listening_socket
