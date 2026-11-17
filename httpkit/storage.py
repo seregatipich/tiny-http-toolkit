@@ -14,10 +14,11 @@ def send_to_log(log_path: str, log_entry: dict) -> None:
         OSError: if the file cannot be created or written.
         TypeError: if ``log_entry`` is not JSON serialisable.
     """
+    serialized_entry = json.dumps(log_entry, ensure_ascii=False)
     log_file_path = Path(log_path)
     log_file_path.parent.mkdir(parents=True, exist_ok=True)
     with log_file_path.open("a", encoding="utf-8") as log_file:
-        log_file.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+        log_file.write(serialized_entry + "\n")
 
 
 def read_log(log_path: str) -> list[dict]:
@@ -28,17 +29,18 @@ def read_log(log_path: str) -> list[dict]:
     Raises:
         OSError: if the file exists but cannot be read.
     """
-    if not Path(log_path).exists():
-        return []
     log_entries = []
-    with open(log_path, encoding="utf-8") as log_file:
-        for line in log_file:
-            try:
-                parsed_line = json.loads(line)
-            except ValueError:
-                continue
-            if isinstance(parsed_line, dict):
-                log_entries.append(parsed_line)
+    try:
+        with open(log_path, encoding="utf-8", errors="replace") as log_file:
+            for line in log_file:
+                try:
+                    parsed_line = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(parsed_line, dict):
+                    log_entries.append(parsed_line)
+    except FileNotFoundError:
+        return []
     return log_entries
 
 

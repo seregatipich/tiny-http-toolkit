@@ -32,6 +32,19 @@ def test_sending_rejects_entries_that_are_not_json_serialisable(tmp_path):
         send_to_log(str(tmp_path / "log.jsonl"), {"unserialisable": {1, 2}})
 
 
+def test_failed_serialisation_does_not_create_the_log_file(tmp_path):
+    log_path = tmp_path / "log.jsonl"
+    with pytest.raises(TypeError):
+        send_to_log(str(log_path), {"unserialisable": {1, 2}})
+    assert not log_path.exists()
+
+
+def test_reading_survives_bytes_that_are_not_valid_utf8(tmp_path):
+    log_file = tmp_path / "log.jsonl"
+    log_file.write_bytes(b'{"a": 1}\n\xff\xfe broken\n{"b": 2}\n')
+    assert read_log(str(log_file)) == [{"a": 1}, {"b": 2}]
+
+
 def test_display_prints_results_and_errors(tmp_path, capsys):
     log_path = str(tmp_path / "log.jsonl")
     send_to_log(
