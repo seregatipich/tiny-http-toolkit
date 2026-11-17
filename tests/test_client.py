@@ -27,10 +27,7 @@ def test_call_api_records_http_error_statuses_as_results(server_port):
     assert "error" not in log_entry
 
 
-def test_call_api_records_connection_refused_as_error():
-    with socket.socket() as reserved_socket:
-        reserved_socket.bind(("127.0.0.1", 0))
-        closed_port = reserved_socket.getsockname()[1]
+def test_call_api_records_connection_refused_as_error(closed_port):
     log_entry = call_api(f"http://127.0.0.1:{closed_port}/")
     assert "ConnectionError" in log_entry["error"]
     assert "status" not in log_entry

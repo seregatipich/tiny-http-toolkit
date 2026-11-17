@@ -109,9 +109,11 @@ def test_starting_on_a_busy_port_is_reported(
 
 
 def test_unreachable_url_is_logged_as_an_error_not_a_crash(
-    log_path, type_answers, capsys
+    log_path, type_answers, capsys, closed_port
 ):
-    type_answers(*send_request_to("http://127.0.0.1:9/"), *view_log(), *quit_menu())
+    type_answers(
+        *send_request_to(f"http://127.0.0.1:{closed_port}/"), *view_log(), *quit_menu()
+    )
     run_menu(log_path)
     assert "ConnectionError" in capsys.readouterr().out
 
