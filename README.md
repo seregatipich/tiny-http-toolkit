@@ -48,7 +48,7 @@ Typical session: `1` start the server, `2` send `GET /echo/hello`, `3` view the 
 | `httpkit/server.py` | socket HTTP server |
 | `httpkit/storage.py` | log file: `send_to_log`, `read_log`, `display_log` |
 
-Data structures: dicts (log entries, headers, state), lists (log entries), sets (allowed URL schemes), tuples (request line, route result, menu options).
+Data structures: dicts (log entries, request headers, app state), lists (log entries read from the file), sets (allowed URL schemes), tuples (parsed request, status code and response text, menu options).
 
 ## Tests
 
