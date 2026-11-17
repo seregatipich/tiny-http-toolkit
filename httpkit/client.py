@@ -5,25 +5,25 @@ from datetime import datetime
 import requests
 
 
-def call_api(url: str, timeout: float = 5.0) -> dict:
-    """Send a GET request to ``url`` and describe the result.
+def call_api(url: str, timeout_seconds: float = 5.0, max_body_chars: int = 500) -> dict:
+    """Send a GET request to ``url`` and describe the result as a log entry.
 
     Network problems do not raise; they are stored under ``error`` so they can be
     reviewed in the log like any other result.
 
     Returns:
-        ``{"timestamp", "url", "status", "body"}`` (body cut to 500 characters) or
-        ``{"timestamp", "url", "error"}``.
+        ``{"timestamp", "url", "status", "body"}`` (body cut to ``max_body_chars``
+        characters) or ``{"timestamp", "url", "error"}``.
     """
-    entry: dict = {
+    log_entry: dict = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "url": url,
     }
     try:
-        response = requests.get(url, timeout=timeout)
-    except requests.exceptions.RequestException as exc:
-        entry["error"] = f"{type(exc).__name__}: {exc}"
+        response = requests.get(url, timeout=timeout_seconds)
+    except requests.exceptions.RequestException as request_error:
+        log_entry["error"] = f"{type(request_error).__name__}: {request_error}"
     else:
-        entry["status"] = response.status_code
-        entry["body"] = response.text[:500]
-    return entry
+        log_entry["status"] = response.status_code
+        log_entry["body"] = response.text[:max_body_chars]
+    return log_entry
