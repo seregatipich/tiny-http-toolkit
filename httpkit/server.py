@@ -7,6 +7,28 @@ from http import HTTPStatus
 from urllib.parse import unquote, urlsplit
 
 
+def read_request_bytes(
+    client_connection: socket.socket, max_request_bytes: int = 8192
+) -> bytes:
+    """Read from ``client_connection`` until the blank line that ends the headers.
+
+    Stops early if the client closes the connection.
+
+    Raises:
+        ValueError: if the headers are not finished within ``max_request_bytes``.
+        OSError: on network errors, including a timeout.
+    """
+    request_bytes = b""
+    while b"\r\n\r\n" not in request_bytes:
+        if len(request_bytes) >= max_request_bytes:
+            raise ValueError("Request headers are too large.")
+        received_bytes = client_connection.recv(4096)
+        if not received_bytes:
+            break
+        request_bytes += received_bytes
+    return request_bytes
+
+
 def parse_request(request_bytes: bytes) -> tuple[str, str, dict]:
     """Return ``(http_method, path, headers)`` from the bytes of a request.
 
@@ -49,6 +71,7 @@ def build_http_response(status_code: int, response_text: str) -> bytes:
     head = (
         f"HTTP/1.1 {status_code} {HTTPStatus(status_code).phrase}\r\n"
         "Content-Type: text/plain; charset=utf-8\r\n"
+        "X-Content-Type-Options: nosniff\r\n"
         f"Content-Length: {len(body)}\r\n"
         "Connection: close\r\n\r\n"
     )
@@ -58,14 +81,14 @@ def build_http_response(status_code: int, response_text: str) -> bytes:
 def answer_client(client_connection: socket.socket) -> None:
     """Answer one request on ``client_connection`` and close it.
 
-    Malformed requests get 400; clients that stay silent for a second are dropped.
+    Malformed or oversized requests get 400; clients that stay silent for a second
+    are dropped.
     """
-    max_request_bytes = 4096
     silent_client_timeout_seconds = 1
     with client_connection:
         client_connection.settimeout(silent_client_timeout_seconds)
         try:
-            request_bytes = client_connection.recv(max_request_bytes)
+            request_bytes = read_request_bytes(client_connection)
             status_code, response_text = choose_response(*parse_request(request_bytes))
         except ValueError:
             status_code, response_text = 400, "Bad request"
