@@ -6,7 +6,7 @@ From a menu you start the built-in server, call its API (or any other HTTP API) 
 
 ## Setup
 
-Requires Python 3.10+.
+Requires Python 3.10 or newer (tested on 3.10, 3.12 and 3.14).
 
 ```bash
 python3 -m venv venv
@@ -31,6 +31,8 @@ Typical session: `1` start the server, `2` send `GET /echo/hello`, `3` view the 
 
 ## Server endpoints
 
+GET only, plain text, bound to `127.0.0.1`. It answers one client at a time and drops clients that stay silent for a second.
+
 | Path | Result |
 | --- | --- |
 | `/` | status text |
@@ -50,8 +52,13 @@ Typical session: `1` start the server, `2` send `GET /echo/hello`, `3` view the 
 
 Data structures: dicts (log entries, request headers, app state), lists (log entries read from the file), sets (allowed URL schemes), tuples (parsed request, status code and response text, menu options).
 
-## Tests
+## Tests and checks
 
 ```bash
 python -m pytest
+ruff format --check .
+ruff check .
+mypy
 ```
+
+The tests start a real server on a free port.
