@@ -10,7 +10,9 @@ def test_validate_port_accepts_numbers_in_range(user_input, expected_port):
     assert validate_port(user_input) == expected_port
 
 
-@pytest.mark.parametrize("user_input", ["abc", "", "-1", "65536", "80.5"])
+@pytest.mark.parametrize(
+    "user_input", ["abc", "", "-1", "+80", "65536", "80.5", "8_080", "８０８０"]
+)
 def test_validate_port_rejects_everything_else(user_input):
     with pytest.raises(ValueError):
         validate_port(user_input)
@@ -22,7 +24,16 @@ def test_validate_url_accepts_http_and_https(user_input):
 
 
 @pytest.mark.parametrize(
-    "user_input", ["", "example.com", "ftp://host", "http://", "/echo/hi"]
+    "user_input",
+    [
+        "",
+        "example.com",
+        "ftp://host",
+        "http://",
+        "http://:80",
+        "http://host:abc",
+        "/echo/hi",
+    ],
 )
 def test_validate_url_rejects_missing_scheme_unsupported_scheme_or_host(user_input):
     with pytest.raises(ValueError):

@@ -7,14 +7,14 @@ def validate_port(user_input: str) -> int:
     """Convert ``user_input`` to a TCP port number (0 means "pick a free port").
 
     Raises:
-        ValueError: if ``user_input`` is not a whole number between 0 and 65535.
+        ValueError: if ``user_input`` is not made of ASCII digits or is above 65535.
     """
-    try:
-        port_number = int(user_input.strip())
-    except ValueError:
-        raise ValueError(f"Port must be a whole number, got {user_input!r}.") from None
-    if not 0 <= port_number <= 65535:
-        raise ValueError("Port must be between 0 and 65535.")
+    digits = user_input.strip()
+    if not (digits.isascii() and digits.isdigit()):
+        raise ValueError(f"Port must be a whole number, got {user_input!r}.")
+    port_number = int(digits)
+    if port_number > 65535:
+        raise ValueError("Port must be at most 65535.")
     return port_number
 
 
@@ -28,7 +28,10 @@ def validate_url(user_input: str) -> str:
     url_parts = urlsplit(url)
     if url_parts.scheme not in {"http", "https"}:
         raise ValueError("URL must start with http:// or https://.")
-    host_and_port = url_parts.netloc
-    if not host_and_port:
+    if not url_parts.hostname:
         raise ValueError("URL must include a host.")
+    try:
+        _explicit_port = url_parts.port
+    except ValueError:
+        raise ValueError("URL has an invalid port.") from None
     return url
