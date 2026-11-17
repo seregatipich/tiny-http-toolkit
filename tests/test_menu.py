@@ -69,8 +69,8 @@ def test_second_start_is_refused(log_path, feed, capsys):
     assert "already running" in capsys.readouterr().out
 
 
-def test_start_on_busy_port_reports_error(log_path, feed, capsys, server):
-    feed("1", str(server), "0")
+def test_start_on_busy_port_reports_error(log_path, feed, capsys, server_port):
+    feed("1", str(server_port), "0")
     run_menu(log_path)
     assert "Could not start the server" in capsys.readouterr().out
 

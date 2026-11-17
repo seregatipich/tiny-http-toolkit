@@ -59,25 +59,30 @@ def test_build_http_response_has_status_line_length_and_body():
     assert response_bytes.endswith(b"\r\n\r\nno")
 
 
-def test_root_echo_and_user_agent_over_a_real_socket(server):
-    assert get_response(server) == (200, b"tiny-http-toolkit is running")
-    assert get_response(server, path="/echo/hello%20world") == (200, b"hello world")
+def test_root_echo_and_user_agent_over_a_real_socket(server_port):
+    assert get_response(server_port) == (200, b"tiny-http-toolkit is running")
+    assert get_response(server_port, path="/echo/hello%20world") == (
+        200,
+        b"hello world",
+    )
     user_agent_headers = {"User-Agent": "test-agent"}
-    assert get_response(server, path="/user-agent", headers=user_agent_headers) == (
+    assert get_response(
+        server_port, path="/user-agent", headers=user_agent_headers
+    ) == (
         200,
         b"test-agent",
     )
 
 
-def test_unknown_path_gets_404_and_post_gets_405(server):
-    assert get_response(server, path="/nope")[0] == 404
-    assert get_response(server, "POST", "/")[0] == 405
+def test_unknown_path_gets_404_and_post_gets_405(server_port):
+    assert get_response(server_port, path="/nope")[0] == 404
+    assert get_response(server_port, "POST", "/")[0] == 405
 
 
-def test_malformed_request_gets_400(server):
-    assert send_raw_bytes(server, b"NONSENSE\r\n\r\n").startswith(b"HTTP/1.1 400")
+def test_malformed_request_gets_400(server_port):
+    assert send_raw_bytes(server_port, b"NONSENSE\r\n\r\n").startswith(b"HTTP/1.1 400")
 
 
-def test_silent_client_does_not_block_the_server_forever(server):
-    with socket.create_connection(("127.0.0.1", server)):
-        assert get_response(server)[0] == 200
+def test_silent_client_does_not_block_the_server_forever(server_port):
+    with socket.create_connection(("127.0.0.1", server_port)):
+        assert get_response(server_port)[0] == 200
