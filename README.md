@@ -1,6 +1,6 @@
 # tiny-http-toolkit
 
-A small console app built around a minimal HTTP server (a stripped-down version of [http-server-python](https://github.com/seregatipich/http-server-python)).
+A small console app built around a minimal HTTP server.
 
 From a menu you start the built-in server, call its API (or any other HTTP API) with `requests`, and read the results later from a log file. Results are **not printed when a request is sent**: they are appended to `data/history.jsonl` and shown on demand with "View log", so nothing has to be requested again.
 
